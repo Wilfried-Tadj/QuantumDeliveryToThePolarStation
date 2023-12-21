@@ -10,3 +10,86 @@ import numpy as np
 from numpy import sqrt
 from random import randrange 
 from qiskit.extensions import RXGate, XGate, CXGate, YGate, ZGate, IGate
+
+# EB - expedition base, V0 
+# WS - warehouse and store, V1
+# RF1 - refueling station 1, V2
+# RF2 - refueling station 2, V3
+# PS - Polar station, V4
+
+Tet = list()
+Phi = list()
+R1 = list()
+R2 = list()
+Phase = list()
+A = list()
+B = list()
+X = list()
+Y = list()
+Z = list()
+V = list()
+
+States = list()
+
+for i in range(5):
+    if i == 4:
+        theta = 0.0
+        phi = 0.0
+        Tet.append(theta)
+        Phi.append(phi)
+    else:
+        theta = round(randrange(18000)/100, 0)
+        phi = round(randrange(36000)/100, 0)
+        Tet.append(theta)
+        Phi.append(phi)
+        
+print(Tet, Phi)
+for i in range(5):
+    r1 = np.cos((Tet[i]*pi/180)/2)
+    r2 = np.sin((Tet[i]*pi/180)/2)
+    phase = complex(np.cos(Phi[i]*pi/180),np.sin(Phi[i]*pi/180))
+    a = round(phase.real,3)
+    b = round(phase.imag,3)
+    R1.append(r1)
+    R2.append(r2)
+    Phase.append(phase)
+    A.append(a)
+    B.append(b)
+
+    x = np.sin(Tet[i]*pi/180)*np.cos(Phi[i]*pi/180)
+    y = np.sin(Tet[i]*pi/180)*np.sin(Phi[i]*pi/180)
+    z = np.cos(Tet[i]*pi/180)
+    v = np.array([x, y, z])
+    X.append(x)
+    Y.append(y)
+    Z.append(z)
+    V.append(v)
+    
+    state = [r1, r2*phase]
+    States.append(state)
+#print(V)
+
+print("EXPEDITION BASE:")
+print("Theta in degree is", Tet[0],"| phi in degree is", Phi[0])
+print("Quantum state is", round(R1[0],3),"|0> + (",A[0],"+",B[0],"j)",round(R2[0],3),"|1>")
+print("Spherical coordinates: x =",round(X[0],2),"y =",round(Y[0],2),"z =",round(Z[0],2), '\n')
+
+print("WAREHOUSE and STORE:")
+print("Theta in degree is", Tet[1],"| phi in degree is", Phi[1])
+print("Quantum state is", round(R1[1],3),"|0> + (",A[1],"+",B[1],"j)",round(R2[1],3),"|1>")
+print("Spherical coordinates: x =",round(X[1],2),"y =",round(Y[1],2),"z =",round(Z[1],2), '\n')
+
+print("REFUELING STATION 1:")
+print("Theta in degree is", Tet[2],"| phi in degree is", Phi[2])
+print("Quantum state is", round(R1[2],3),"|0> + (",A[2],"+",B[2],"j)",round(R2[2],3),"|1>")
+print("Spherical coordinates: x =",round(X[2],2),"y =",round(Y[2],2),"z =",round(Z[2],2), '\n')
+
+print("REFUELING STATION 2:")
+print("Theta in degree is", Tet[3],"| phi in degree is", Phi[3])
+print("Quantum state is", round(R1[3],3),"|0> + (",A[3],"+",B[3],"j)",round(R2[3],3),"|1>")
+print("Spherical coordinates: x =",round(X[3],2),"y =",round(Y[3],2),"z =",round(Z[3],2), '\n')
+
+print("POLAR STATION:")
+print("Theta in degree is", Tet[4],"| phi in degree is", Phi[4])
+print("Quantum state is", round(R1[4],3),"|0> + (",A[4],"+",B[4],"j)",round(R2[4],3),"|1>")
+print("Spherical coordinates: x =",round(X[4],2),"y =",round(Y[4],2),"z =",round(Z[4],2), '\n')
