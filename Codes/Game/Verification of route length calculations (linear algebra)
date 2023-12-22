@@ -1,0 +1,45 @@
+# In this block, we calculate the distances between all 
+# the waypoints of the route to verify that the user
+# has plotted the route correctly given the fuel constraints 
+R_Erth = 6378.136
+Angle = np.empty((5, 5))
+Distance = np.empty((5, 5))
+for i in range(5):
+    for j in range(5):
+        angle = round(acos(V[i].dot(V[j]))*180/pi, 1)
+        d= round(pi*R_Erth*angle/180, 0)
+        Angle[i,j] = angle
+        Distance[i,j] = d
+            
+            
+print(Angle)
+print(Distance)
+
+
+# After user's calculations in copybook (or work book), the user enters the route 
+# in the interface field and can check the correctness
+# of the calculation by clicking the "Check route" button.
+# If the calculation was incorrect, the system displays 
+# the error "Calculation is incorrect, repeat the calculation"
+#-------------------------
+# User input his Rout in interface
+Routs = [0, 1, 2, 4, 0]
+IFQ = 200000 # Initial fuel Initial fuel quantity at the base: 200 tons.
+FCEA = 2000 # Fuel consumption of an empty aircraft: 2000 l/100 km.
+FCEL = 15 # Fuel consumption with equipment load : +15% l/100 km.
+print(Routs[2], len(Routs), Routs.index(1))
+CD = 0 # Common distance
+CFC = 0 # Common Fuel balance
+for i in range(len(Routs)-1):
+    d = Distance[Routs[i], Routs[i+1]]
+    FC = d*2000/100 # fuel consumption
+    CFC = CFC + FC
+    FB = IFQ - CFC # Fuel balance
+    CD = CD + d
+    if FB < 0:
+        print("Lack of fuel on route ", Routs[i], "--->", Routs[i+1])
+        break
+    print(d, FC, CFC, FB, CD)
+print("Rout culculation is correct, create the quantum circuit to get the Polar Station")
+
+
