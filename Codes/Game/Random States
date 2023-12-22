@@ -1,3 +1,10 @@
+# In this block we create random quantum states for the waypoints.  
+# The "print" operator is just for output and data checking. In the 
+# game it is necessary to finish this module with visualization of five 
+# route points (small islands: expedition base, warehouse and store, 2 
+# refueling stations and destination Polar station) 
+#-------------------------------------------------------
+
 import qiskit
 from qiskit import QuantumCircuit, QuantumRegister, ClassicalRegister, transpile
 from qiskit.quantum_info import Statevector, Operator
@@ -66,8 +73,7 @@ for i in range(5):
     V.append(v)
     
     state = [r1, r2*phase]
-    States.append(state)
-#print(V)
+    States.append(state) # Write all states 
 
 print("EXPEDITION BASE:")
 print("Theta in degree is", Tet[0],"| phi in degree is", Phi[0])
@@ -93,3 +99,37 @@ print("POLAR STATION:")
 print("Theta in degree is", Tet[4],"| phi in degree is", Phi[4])
 print("Quantum state is", round(R1[4],3),"|0> + (",A[4],"+",B[4],"j)",round(R2[4],3),"|1>")
 print("Spherical coordinates: x =",round(X[4],2),"y =",round(Y[4],2),"z =",round(Z[4],2), '\n')
+#-----------------------------------------------------
+# In this block, we create a quantum circuit and set the qubits to the
+# resulting random states for further visualization. In the program 
+# interface it is possible to display each point of the route with full 
+# description of its state and position on the Bloch sphere  
+# EB - expedition base, V0 
+# WS - warehouse and store, V1
+# RF1 - refueling station 1, V2
+# RF2 - refueling station 2, V3
+# PS - Polar station, V4
+q0 = QuantumRegister(1, "EB")
+q1 = QuantumRegister(1, "WH")
+q2 = QuantumRegister(1, "RS1")
+q3 = QuantumRegister(1, "RS2")
+q4 = QuantumRegister(1, "PS")
+
+Circ = QuantumCircuit(q0, q1, q2, q3, q4)
+EB = Statevector(States[0])
+WH = Statevector(States[1])
+RS1 = Statevector(States[2])
+RS2 = Statevector(States[3])
+PS = Statevector(States[4])
+Circ.initialize(EB, [q0])
+Circ.initialize(WH, [q1])
+Circ.initialize(RS1, [q2])
+Circ.initialize(RS2, [q3])
+Circ.initialize(PS, [q4])
+simulator = Aer.get_backend('statevector_simulator')
+result = execute(Circ, backend = simulator).result()
+statevector = result.get_statevector()
+plot_bloch_multivector(statevector)
+# This the and of block, user has all necessary information for further calculation with liner algebra
+
+
