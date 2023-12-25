@@ -12,8 +12,8 @@ for i in range(5):
         Distance[i,j] = d
             
             
-print(Angle)
-print(Distance)
+#print(Angle)
+#print(Distance)
 
 
 # After user's calculations in copybook (or work book), the user enters the route 
@@ -24,22 +24,31 @@ print(Distance)
 #-------------------------
 # User input his Rout in interface
 Routs = [0, 1, 2, 4, 0]
-IFQ = 200000 # Initial fuel Initial fuel quantity at the base: 200 tons.
+IFB = 200000 # Initial fuel Initial fuel quantity at the base: 200 tons.
+FB = IFB
 FCEA = 2000 # Fuel consumption of an empty aircraft: 2000 l/100 km.
 FCEL = 15 # Fuel consumption with equipment load : +15% l/100 km.
-print(Routs[2], len(Routs), Routs.index(1))
+#print(Routs[2], len(Routs), Routs.index(1))
 CD = 0 # Common distance
-CFC = 0 # Common Fuel balance
+CFC = 0 # Common Fuel consumption
+
 for i in range(len(Routs)-1):
     d = Distance[Routs[i], Routs[i+1]]
-    FC = d*2000/100 # fuel consumption
-    CFC = CFC + FC
-    FB = IFQ - CFC # Fuel balance
     CD = CD + d
+    FC = d*2000/100 # fuel consumption
+    FB = FB - FC # Fuel balance
+    print(Routs[i], "--->", Routs[i+1], d, FC, FB, CD)
     if FB < 0:
-        print("Lack of fuel on route ", Routs[i], "--->", Routs[i+1])
+        print(Routs[i], "--->", Routs[i+1], d, FC, FB, CD, "Lack of fuel on route ")
         break
-    print(d, FC, CFC, FB, CD)
-print("Rout culculation is correct, create the quantum circuit to get the Polar Station")
+    if Routs[i+1] == 2:
+        FB = IFB
+        print("Refueling in Sattion 2 ")
+    if Routs[i+1] == 3:
+        FB = IFB
+        print("Refueling in Sattion 3 ")
+    #print(Routs[i], "--->", Routs[i+1], d, FC, FB, CD)
+if FB > 0:
+    print("Rout culculation is correct, create the quantum circuit to get the Polar Station")
 
 
