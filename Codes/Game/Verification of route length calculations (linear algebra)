@@ -1,29 +1,11 @@
-# In this block, we calculate the distances between all 
-# the waypoints of the route to verify that the user
-# has plotted the route correctly given the fuel constraints 
-R_Erth = 6378.136
-Angle = np.empty((5, 5))
-Distance = np.empty((5, 5))
-for i in range(5):
-    for j in range(5):
-        angle = round(acos(V[i].dot(V[j]))*180/pi, 1)
-        d= round(pi*R_Erth*angle/180, 0)
-        Angle[i,j] = angle
-        Distance[i,j] = d
-            
-            
-#print(Angle)
-#print(Distance)
-
-
-# After user's calculations in copybook (or work book), the user enters the route 
+# After its calculations, the user enters the route 
 # in the interface field and can check the correctness
 # of the calculation by clicking the "Check route" button.
 # If the calculation was incorrect, the system displays 
 # the error "Calculation is incorrect, repeat the calculation"
 #-------------------------
 # User input his Rout in interface
-Routs = [0, 1, 2, 4, 0]
+Routs = [0, 1, 3, 4, 3, 0]
 IFB = 200000 # Initial fuel Initial fuel quantity at the base: 200 tons.
 FB = IFB
 FCEA = 2000 # Fuel consumption of an empty aircraft: 2000 l/100 km.
@@ -37,18 +19,18 @@ for i in range(len(Routs)-1):
     CD = CD + d
     FC = d*2000/100 # fuel consumption
     FB = FB - FC # Fuel balance
-    print(Routs[i], "--->", Routs[i+1], d, FC, FB, CD)
+    print(Routs[i], "--->", Routs[i+1], "Distanse:", d, "fuel consumption:", FC, "Fuel balance:", FB)
     if FB < 0:
-        print(Routs[i], "--->", Routs[i+1], d, FC, FB, CD, "Lack of fuel on route ")
+        print(Routs[i], "--->", Routs[i+1], "Distanse:", d, "fuel consumption:", FC, "Fuel balance:", FB, "Lack of fuel on route ")
         break
     if Routs[i+1] == 2:
         FB = IFB
-        print("Refueling in Sattion 2 ")
+        print("Refueling in Sattion 1 ")
     if Routs[i+1] == 3:
         FB = IFB
-        print("Refueling in Sattion 3 ")
-    #print(Routs[i], "--->", Routs[i+1], d, FC, FB, CD)
+        print("Refueling in Sattion 2 ")
+    #print(Routs[i], "--->", Routs[i+1], "Distanse:", d, "fuel consumption:", FC, "Fuel balance:", FB)
 if FB > 0:
-    print("Rout culculation is correct, create the quantum circuit to get the Polar Station")
+    print("Rout culculation is correct, create the quantum circuit to get the Polar Station !", "Common distance:", CD)
 
 
