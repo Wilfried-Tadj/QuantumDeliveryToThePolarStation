@@ -1,0 +1,102 @@
+# This function allows you to build a quantum circuit based on quantum gates
+# selected by the user to move from one state to another, for example from
+# a base to a warehouse for equipment
+def routs(Matrix, state):
+    CircR = QuantumCircuit(q0)
+    CircR.initialize(state, [q0])
+            
+    for i in range(len(Matrix)):
+        CircR.append(Matrix[i], q0)
+       
+    simulator = Aer.get_backend('statevector_simulator')
+    result = execute(CircR, backend = simulator).result()
+    statevector = result.get_statevector()
+    statevector.draw('latex')
+    States2.append(statevector) 
+    return States2
+
+
+# This is a helper function 1 to translate the vector into a unified representation
+def euler_formula(c):
+    Re = c.real
+    Im = c.imag
+    r = sqrt(Re*Re+Im*Im)
+    
+    theta = asin(Im/r)
+    
+    if Re<0: # second or third quadrant
+        theta = pi-theta
+    return(r,theta)
+
+def unique_representation(c1,c2):
+    if c1==0:
+        r1 = theta1 = 0
+    else:
+        [r1,theta1] = euler_formula(c1)
+    if c2==0:
+        r2=theta2 = 0
+    else:
+        [r2,theta2] = euler_formula(c2)
+        
+    return [r1,r2,theta2-theta1, theta1, theta2]
+
+
+# This is an auxiliary function 2 , which checks the accuracy 
+# of the transition from one state to another
+def checking_accuracy(statevector):
+    k = len(States2)-1
+    [alpha, beta] = statevector
+    [r1,r2, phi, t1, t2] = unique_representation(alpha,beta)
+    print("the state is")
+    c1 = complex( round(state[0].real,3) , round(state[0].imag,3) )
+    c2 = complex( round(state[1].real,3) , round(state[1].imag,3) )
+    print(c1,"|0> + ",c2,"|1>")
+    r1 = round(r1,3)
+    r2 = round(r2,3)
+    multiple_of_pi = round(phi/pi,3)
+    phi = round(phi,3)
+    print("the unique representation is")
+    print(r1,"|0> +",r2,"exp(i(",multiple_of_pi,")π) |1>")
+    print('psi = ', round(multiple_of_pi*180, 1))
+    print('Teta = ', round(asin(r2)*360/pi,1), 'Teta1 = ', t1*180/pi, 'Teta2 = ', t2*180/pi)
+
+    x = np.sin(asin(r2)*2)*np.cos(phi)
+    y = np.sin(asin(r2)*2)*np.sin(phi)
+    z = np.cos(asin(r2)*2)
+    return round(x-X[Routs[k]],2), round(y-Y[Routs[k]],2), round(z-Z[Routs[k]],2)
+
+# THE MAIN BLOK
+# In this block we build quantum circuits for moving between selected route points
+# we always start from the BASE Station
+from qiskit import *
+States2 = []
+States2.append(States[0]) 
+state = States2[0]
+alfa = [-21*pi/180, 59*pi/180, 92*pi/180] # This is an example, we pripare angles  
+M1 = RZGate(alfa[0], label="RZ") # we chose neсessary gates 
+M2 = RYGate(alfa[1], label="RY")
+M3 = RZGate(alfa[2], label="RZ")
+Matrix = [M1, M2, M3]
+# start functions 
+routs(Matrix, state)
+checking_accuracy(States2[1])
+
+# This is the next fly to the next point of rout, example
+state = States2[1]
+alfa = [88*pi/180, 7*pi/180, -63*pi/180]
+M1 = RZGate(alfa[0], label="RZ")
+M2 = RYGate(alfa[1], label="RY")
+M3 = RZGate(alfa[2], label="RZ")
+Matrix = [M1, M2, M3]
+routs(Matrix, state)
+checking_accuracy(States2[2])
+
+# This is the next fly to the next point of rout, example
+state = States2[2]
+alfa = [63*pi/180, -31*pi/180]
+M1 = RZGate(alfa[0], label="RZ")
+M2 = RYGate(alfa[1], label="RY")
+Matrix = [M1, M2]
+
+routs(Matrix, state)
+checking_accuracy(States2[3])
