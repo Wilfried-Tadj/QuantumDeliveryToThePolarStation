@@ -1,0 +1,106 @@
+import sys
+import pygame
+from qiskit.visualization import plot_bloch_vector
+from qiskit import QuantumCircuit, Aer, execute
+from qiskit.quantum_info import Statevector
+import numpy as np
+import random
+from PIL import Image
+
+# Create a Bloch vector
+vector = [[], [], [], [], []]
+for i in range(5):
+    theta = random.uniform(0, np.pi)
+    phi = random.uniform(0, np.pi * 2)  # To take all possible value in the latitude direction
+    # Cartesians coordonates
+    if i == 4:
+        theta = random.uniform(0, np.pi / 6) # To assume that the vector will be close to the North Pole
+    x = np.sin(theta) * np.cos(phi)
+    y = np.sin(theta) * np.sin(phi)
+    z = np.cos(theta)
+    vector[i] = [x, y, z]
+    plot_bloch_vector(vector[i])
+    bloch_vect = plot_bloch_vector(vector[i], title=f'Station {i+1}')
+    bloch_vect.savefig(f'Station{i+1}.png', dpi=25)
+
+
+print(vector)
+
+
+
+# Plot the Bloch sphere using Qiskit
+plot_bloch_vector(vector)
+
+bloch_plot = plot_bloch_vector(vector)
+# Save the plot as an image file
+bloch_plot.savefig('bloch_vector.png')
+
+# Initialize Pygame
+pygame.init()
+
+# Set the dimensions of the Pygame screen
+screen_width = 1000
+screen_height = 650
+screen = pygame.display.set_mode((screen_width, screen_height))
+clock = pygame.time.Clock()
+pygame.display.set_caption("QUANTUM POLAR STATION GAME")
+screen.fill((120, 120, 120))
+# Load the Bloch vector image
+bloch_image = pygame.image.load('bloch_vector.png')
+
+bloch_station1 = pygame.image.load("Station1.png")
+bloch_station2 = pygame.image.load("Station2.png")
+bloch_station3 = pygame.image.load("Station3.png")
+bloch_station4 = pygame.image.load("Station4.png")
+bloch_station5 = pygame.image.load("Station5.png")
+
+x = (screen_width - bloch_image.get_width())/2
+y = (screen_height - bloch_image.get_height())/2
+print(x,y)
+
+# Display the Bloch vector image on the Pygame screen
+screen.blit(bloch_image, (x,y)) #Main image
+screen.blit(bloch_station1, (30, 4 + 0*bloch_station1.get_height()))
+screen.blit(bloch_station2, (30, 6 + 1*bloch_station2.get_height()))
+screen.blit(bloch_station3, (30, 8 + 2*bloch_station3.get_height()))
+screen.blit(bloch_station4, (30, 10 + 3*bloch_station4.get_height()))
+screen.blit(bloch_station5, (30, 12 + 4*bloch_station5.get_height()))
+
+#Button class
+button_width = 90
+button_height = 40
+class Button:
+    def __init__(self, x, y, button_width , button_height, color, text):
+        self.rect = pygame.Rect(x, y, button_width, button_height)
+        self.color = color
+        self.text = text
+
+    def draw(self, screen):
+        pygame.draw.rect(screen, self.color, self.rect)
+        font = pygame.font.Font(None, 30)
+        text_surface = font.render(self.text, True, (255, 255, 255))
+        text_rect = text_surface.get_rect(center=self.rect.center)
+        screen.blit(text_surface, text_rect)
+
+#Create Button:
+button1 = Button(300, screen_height-(button_height+12), button_width, button_height, (80, 80, 80), "Road 1")
+button2 = Button(400, screen_height-(button_height+12), button_width, button_height, (80, 80, 80), "Road 2")
+button3 = Button(500, screen_height-(button_height+12), button_width, button_height, (80, 80, 80), "Road 3")
+button4 = Button(600, screen_height-(button_height+12), button_width, button_height, (80, 80, 80), "Road 4")
+
+# Wait for the user to close the Pygame window
+while True:
+    for event in pygame.event.get():
+        if event.type == pygame.QUIT:
+            pygame.quit()
+            sys.exit()
+
+    button1.draw(screen)
+    button2.draw(screen)
+    button3.draw(screen)
+    button4.draw(screen)
+    clock.tick(60)
+    pygame.display.update()
+
+# Quit Pygame
+#pygame.quit()
