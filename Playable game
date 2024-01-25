@@ -1,0 +1,714 @@
+from qiskit import QuantumCircuit, QuantumRegister, transpile, assemble, Aer, execute
+from qiskit.visualization import plot_bloch_multivector, plot_bloch_vector, plot_state_qsphere
+from qiskit.dagcircuit import DAGCircuit
+from qiskit.converters import circuit_to_dag
+from qiskit.visualization import dag_drawer, plot_state_city
+from qiskit.tools.visualization import circuit_drawer
+import random
+import numpy as np
+
+import sys
+import pygame
+
+pygame.init()
+
+screen_width = 1000
+screen_height = 650
+screen = pygame.display.set_mode((screen_width, screen_height))
+clock = pygame.time.Clock()
+pygame.display.set_caption("QUANTUM POLAR STATION GAME")
+#screen.fill((120, 120, 120))
+
+rotation = []
+for i in range(4):
+    angles = [random.uniform(0, 2 * np.pi) for _ in range(6)]
+    angles[1] = np.pi / 2
+    angles[2] = -np.pi / 2
+    angles[4] = angles[5] = 0
+    random.shuffle(angles)
+    random_selection = random.sample(angles, 3)
+    rotation.append(random_selection)
+
+print(rotation)
+print(rotation[0])
+
+qreg = QuantumRegister(5)
+
+qc = QuantumCircuit(qreg)
+
+for i in range(1, 5):
+    qc.u(rotation[0][0], rotation[0][1], rotation[0][2], qreg[i])
+for j in range(2, 5):
+    qc.u(rotation[1][0], rotation[1][1], rotation[1][2], qreg[j])
+for k in range(3, 5):
+    qc.u(rotation[2][0], rotation[2][1], rotation[2][2], qreg[k])
+for l in range(4, 5):
+    qc.u(rotation[3][0], rotation[3][1], rotation[3][2], qreg[l])
+
+circuit_drawer(qc)
+# print(qc)
+
+# Corresponding rotations gates
+path1 = rotation[0]
+path2 = rotation[1]
+path3 = rotation[2]
+path4 = rotation[3]
+#print('path1 = ', path1) #Cheching
+road = [path1, path2, path3, path4]
+gate_list = []  #List of rotational gate that the player must click to move between stations
+for path in road:
+    i = road.index(path)
+    if path[0] != 0:
+        if path[1] == -1 * np.pi/2:
+            if path[2] == np.pi/2:
+                print("Corresponding rotational gate to go for station", i+1, "to station", i+2, "is RX(", rotation[i][0], ")")
+                rotation[i][0] = round(rotation[i][0] * 180 / np.pi, 2)  #Convert in degree and #Get two numbers after the integer dot
+                angle1 = str(rotation[i][0])[2:]
+                gate1 = "RX(" + angle1 + ")"
+                gate_list.append(gate1)
+            else:
+                print("Corresponding rotational gate to go for station", i+1, "to station", i+2, "is U(", rotation[i], ")")
+                rotation[i][0] = round(rotation[i][0] * 180 / np.pi, 2)
+                rotation[i][1] = round(rotation[i][1] * 180 / np.pi, 2)
+                rotation[i][2] = round(rotation[i][2] * 180 / np.pi, 2)
+                angle2 = str(rotation[i])
+                gate2 = "U(" + angle2 + ")"
+                gate_list.append(gate2)
+        elif path[1] == path[2] == 0:
+            print("Corresponding rotational gate to go for station", i+1, "to station", i+2, "is RY(", rotation[i][0], ")")
+            rotation[i][0] = round(rotation[i][0] * 180 / np.pi, 2)
+            angle3 = str(rotation[i][0])
+            gate3 = "RY(" + angle3 + ")"
+            gate_list.append(gate3)
+        else:
+            print("Corresponding rotational gate to go for station", i+1, "to station", i+2, "is U(", rotation[i], ")")
+            rotation[i][0] = round(rotation[i][0] * 180 / np.pi, 2)
+            rotation[i][1] = round(rotation[i][1] * 180 / np.pi, 2)
+            rotation[i][2] = round(rotation[i][2] * 180 / np.pi, 2)
+            angle4 = str(rotation[i])
+            gate4 = "U(" + angle4 + ")"
+            gate_list.append(gate4)
+    else:
+        if path[1] == 0:
+            print("Corresponding rotational gate to go for station", i+1, "to station", i+2, "is RZ(", rotation[i][2], ")")
+            rotation[i][2] = round(rotation[i][2] * 180 / np.pi, 2)
+            angle5 = str(rotation[i][2])[2:]
+            gate5 = "RZ(" + angle5 + ")"
+            gate_list.append(gate5)
+        elif path[1] == path[2] == rotation[i][2]/2:
+            print("Corresponding rotational gate to go for station", i+1, "to station", i+2, "is ...RZ(", rotation[i][2], ")")
+            rotation[i][2] = round(rotation[i][2] * 180 / np.pi, 2)
+            angle6 = str(rotation[i][2])
+            gate6 = "RZ(" + angle6 + ")"
+            gate_list.append(gate6)
+        else:
+            print("Corresponding rotational gate to go for station", i+1, "to station", i+2, "is U(", rotation[i], ")")
+            rotation[i][0] = round(rotation[i][0] * 180 / np.pi, 2)
+            rotation[i][1] = round(rotation[i][1] * 180 / np.pi, 2)
+            rotation[i][2] = round(rotation[i][2] * 180 / np.pi, 2)
+            angle7 = str(rotation[i])
+            gate7 = "U(" + angle7 + ")"
+            gate_list.append(gate7)
+print(gate_list)
+random_gate_list = random.sample(gate_list, len(gate_list))  #Randomly the gates position in the gate list
+print("Random positional gate is",random_gate_list)
+
+
+
+simulator = Aer.get_backend('statevector_simulator')
+result = execute(qc, backend=simulator).result()
+statevector = result.get_statevector()
+
+plot_bloch_multivector(statevector)  # .savefig("Bloch_vector1")
+# iplot_state_qsphere(result.get_statevector(qc))
+qc.save_amplitudes([0, 1], label='amplitudes')
+
+dag = circuit_to_dag(qc)
+# dag_drawer(dag)
+plot_bloch_multivector(statevector)
+# plot_state_city(result.get_statevector(qc), color=['midnightblue', 'midnightblue'], title="New State City")
+
+
+circuit_drawer(qc)
+stations_globe = plot_bloch_multivector(statevector)
+stations_globe.savefig("many_stations.png", dpi=40)
+
+#GLOBE OBJETC AND ROUTE
+
+# Get caartesians coordinates
+import cmath
+
+
+def stations_infos():
+    q0 = QuantumRegister(1, "PS")
+    q1 = QuantumRegister(1, "WH")
+    q2 = QuantumRegister(1, "RS1")
+    q3 = QuantumRegister(1, "RS2")
+    q4 = QuantumRegister(1, "EB")
+
+    circ1 = QuantumCircuit(q0)
+    circ2 = QuantumCircuit(q1)
+    circ3 = QuantumCircuit(q2)
+    circ4 = QuantumCircuit(q3)
+    circ5 = QuantumCircuit(q4)
+    circ_list = [circ1, circ2, circ3, circ4, circ5]
+    for index in [1, 2, 3, 4]:
+        circ_list[index].u(rotation[0][0], rotation[0][1], rotation[0][2], 0)
+    for index in [2, 3, 4]:
+        circ_list[index].u(rotation[1][0], rotation[1][1], rotation[1][2], 0)
+    for index in [3, 4]:
+        circ_list[index].u(rotation[2][0], rotation[2][1], rotation[2][2], 0)
+    circ_list[4].u(rotation[3][0], rotation[3][1], rotation[3][2], 0)
+
+    # SIMULATION, RESULT AND COORDINATES
+    statevectors, theta_list, phi_list = [], [], []
+    stations_list = []
+    for qc in circ_list:
+        print(qc)
+
+        simulator = Aer.get_backend('statevector_simulator')
+        result = execute(qc, backend=simulator).result()
+        statevector = result.get_statevector()
+        statevectors.append(statevector)
+        print("The corresponding state vector", statevector)
+
+        # Spherical coordinate
+        theta = 2 * np.arccos(np.abs(statevector[0]))
+        theta_list.append(theta)
+
+        phi = cmath.phase(statevector[1])
+        phi_list.append(phi)
+
+        plot_bloch_vector([1, theta, phi], coord_type='spherical')
+
+        # caartesians coordinates
+        x = np.sin(theta) * np.cos(phi)
+        y = np.sin(theta) * np.sin(phi)
+        z = np.cos(phi)
+        V = [x, y, z]
+
+        stations_list.append(V)
+    # Visualise the stations coordinates
+    print("stattions coordinate on the globe", stations_list)
+    # Visualise the stations on the golobe (Bloch sphere)
+    globe = plot_bloch_vector(stations_list)
+    globe.savefig("Bloch_sphere_globe.png", dpi = 90)
+
+
+stations_infos()
+
+
+#PYGAME INTERFACE
+globe = pygame.image.load('Bloch_sphere_globe.png')
+stations = pygame.image.load('many_stations.png')
+
+X = (screen_width - globe.get_width())/2
+Y = (screen_height - globe.get_height())/2
+#print(x,y)
+# Display the globe image on the Pygame screen
+screen.fill((120, 120, 120))
+screen.blit(globe, (X,Y+40)) #Main image
+
+#Display the stations on the pygame screen
+screen.blit(stations, ((screen_width - stations.get_width())/2, 5))
+
+#Button class
+button_width = 230
+button_height = 40
+class Button:
+    def __init__(self, x, y, button_width , button_height, color, text):
+        self.rect = pygame.Rect(x, y, button_width, button_height)
+        self.color = color
+        self.text = text
+
+    def draw(self, screen):
+        pygame.draw.rect(screen, self.color, self.rect)
+        font = pygame.font.Font(None, 30)
+        text_surface = font.render(self.text, True, (255, 255, 255))
+        text_rect = text_surface.get_rect(center=self.rect.center)
+        screen.blit(text_surface, text_rect)
+
+    def is_clicked(self, event):
+        if event.type == pygame.MOUSEBUTTONDOWN:
+            #mouse_pos = pygame.mouse.get_pos()
+            if self.rect.collidepoint(event.pos):
+                return True
+            return False
+
+#Create Button:
+button_x = [30, 270, 510,750]
+button_y = screen_height-(button_height+12)
+button1 = Button(button_x[0], button_y, button_width, button_height, (80, 80, 80), random_gate_list[0])
+button2 = Button(button_x[1], button_y, button_width, button_height, (80, 80, 80), random_gate_list[1])
+button3 = Button(button_x[2], button_y, button_width, button_height, (80, 80, 80), random_gate_list[2])
+button4 = Button(button_x[3], button_y, button_width, button_height, (80, 80, 80), random_gate_list[3])
+button = [button1, button2, button4, button4]
+# Set the position and size of the rectangle
+a1 = (screen_width - stations.get_width())/2 + 60
+a2 = a1 + 105
+a3 = a2 + 105
+a4 = a3 + 105
+a5 = a4 + 105
+x = a1
+b = 25
+rect_width = 120
+rect_height = 90
+# Text info coordinate
+x_info, y_info = 130, 200
+x_decision = 500
+
+
+# Pygame events
+speed = 0.5
+
+font = pygame.font.Font(None, 36)
+
+#INITIALIZATION
+if x == a1:
+    # Display the station name message
+    text = font.render("Polar station", True, (220, 220, 220))
+    text_rect = text.get_rect(center=(x_info, y_info))
+    screen.blit(text, text_rect)
+    pygame.draw.rect(screen, (200, 100, 100), (x, b, rect_width, rect_height), 6)
+while True:
+    for event in pygame.event.get():
+        if event.type == pygame.QUIT:
+            pygame.quit()
+            sys.exit()
+
+        elif event.type == pygame.MOUSEBUTTONDOWN:
+
+            if button1.is_clicked(event):
+                if x == a1:
+                    # Display the station name message
+                    text = font.render("Polar station", True, (220, 220, 220))
+                    text_rect = text.get_rect(center=(x_info, y_info))
+                    screen.blit(text, text_rect)
+                    screen.fill((120, 120, 120))
+                    screen.blit(stations, ((screen_width - stations.get_width()) / 2, 5))
+                    screen.blit(globe, (X, Y + 40))
+                    pygame.draw.rect(screen, (200, 100, 100), (x, b, rect_width, rect_height), 6)
+                    pygame.display.update()
+                    #Control loop to mouve to another station
+                    if button1.text == gate_list[0]:
+                        #Display good choice information
+                        text = font.render("GOOD CHOICE", True, (10, 250, 10))
+                        text_rect = text.get_rect(center=(x_decision, y_info))
+                        screen.blit(text, text_rect)
+                        while x < a2:
+                            x += speed
+                            screen.fill((120, 120, 120))
+                            screen.blit(stations, ((screen_width - stations.get_width()) / 2, 5))
+                            screen.blit(globe, (X,Y+40))
+                            pygame.draw.rect(screen, (200, 100, 100), (x, b, rect_width, rect_height), 6)
+                            pygame.display.update()
+                    else:
+                        # Display the buton choice decision
+                        text = font.render("Wrong choice", True, (250, 10, 10))
+                        text_rect = text.get_rect(center=(x_decision, y_info))
+                        screen.blit(text, text_rect)
+                elif x == a2:
+                    # Display the station name message
+                    text = font.render("Warehouse and store", True, (220, 220, 220))
+                    text_rect = text.get_rect(center=(x_info, y_info))
+                    screen.blit(text, text_rect)
+                    # Control loop to mouve to another station
+                    if button1.text == gate_list[1]:
+                        # Display good choice information
+                        text = font.render("GOOD CHOICE", True, (10, 250, 10))
+                        text_rect = text.get_rect(center=(x_decision, y_info))
+                        screen.blit(text, text_rect)
+                        while x < a3:
+                            x += speed
+                            screen.fill((120, 120, 120))
+                            screen.blit(stations, ((screen_width - stations.get_width()) / 2, 5))
+                            screen.blit(globe, (X,Y+40))
+                            pygame.draw.rect(screen, (200, 100, 100), (x, b, rect_width, rect_height), 6)
+                            pygame.display.update()
+                    else:
+                        # Display the buton choice decision
+                        text = font.render("Wrong choice", True, (250, 10, 10))
+                        text_rect = text.get_rect(center=(x_decision, y_info))
+                        screen.blit(text, text_rect)
+                elif x == a3:
+                    # Display the station name message
+                    text = font.render("Refueling station 1", True, (220, 220, 220))
+                    text_rect = text.get_rect(center=(x_info, y_info))
+                    screen.blit(text, text_rect)
+                    # Control loop to mouve to another station
+                    if button1.text == gate_list[2]:
+                        # Display good choice information
+                        text = font.render("GOOD CHOICE", True, (10, 250, 10))
+                        text_rect = text.get_rect(center=(x_decision, y_info))
+                        screen.blit(text, text_rect)
+                        while x < a4:
+                            x += speed
+                            screen.fill((120, 120, 120))
+                            screen.blit(stations, ((screen_width - stations.get_width()) / 2, 5))
+                            screen.blit(globe, (X,Y+40))
+                            pygame.draw.rect(screen, (200, 100, 100), (x, b, rect_width, rect_height), 6)
+                            pygame.display.update()
+                    else:
+                        # Display the buton choice decision
+                        text = font.render("Wrong choice", True, (250, 10, 10))
+                        text_rect = text.get_rect(center=(x_decision, y_info))
+                        screen.blit(text, text_rect)
+                elif x == a4:
+                    # Display the station name message
+                    text = font.render("Refueling station 2", True, (220, 220, 220))
+                    text_rect = text.get_rect(center=(x_info, y_info))
+                    screen.blit(text, text_rect)
+                    # Control loop to mouve to another station
+                    if button1.text == gate_list[3]:
+                        # Display good choice information
+                        text = font.render("GOOD CHOICE", True, (10, 250, 10))
+                        text_rect = text.get_rect(center=(x_decision, y_info))
+                        screen.blit(text, text_rect)
+                        while x < a5:
+                            x += speed
+                            screen.fill((120, 120, 120))
+                            screen.blit(stations, ((screen_width - stations.get_width()) / 2, 5))
+                            screen.blit(globe, (X,Y+40))
+                            pygame.draw.rect(screen, (200, 100, 100), (x, b, rect_width, rect_height), 6)
+                            pygame.display.update()
+                    else:
+                        # Display the button choice decision
+                        text = font.render("Wrong choice", True, (250, 10, 10))
+                        text_rect = text.get_rect(center=(x_decision, y_info))
+                        screen.blit(text, text_rect)
+                print("Button 1 is clicked")
+            else:
+                pass
+
+            if button2.is_clicked(event):
+                if x == a1:
+                    # Display the station name message
+                    text = font.render("Polar station", True, (220, 220, 220))
+                    text_rect = text.get_rect(center=(x_info, y_info))
+                    screen.blit(text, text_rect)
+                    # Control loop to mouve to another station
+                    if button2.text == gate_list[0]:
+                        # Display good choice information
+                        text = font.render("GOOD CHOICE", True, (10, 250, 10))
+                        text_rect = text.get_rect(center=(x_decision, y_info))
+                        screen.blit(text, text_rect)
+                        while x < a2:
+                            x += speed
+                            screen.fill((120, 120, 120))
+                            screen.blit(stations, ((screen_width - stations.get_width()) / 2, 5))
+                            screen.blit(globe, (X,Y+40))
+                            pygame.draw.rect(screen, (200, 100, 100), (x, b, rect_width, rect_height), 6)
+                            pygame.display.update()
+                    else:
+                        # Display the button choice decision
+                        text = font.render("Wrong choice", True, (250, 10, 10))
+                        text_rect = text.get_rect(center=(x_decision, y_info))
+                        screen.blit(text, text_rect)
+                if x == a2:
+                    # Display the station name message
+                    text = font.render("Warehouse and store", True, (220, 220, 220))
+                    text_rect = text.get_rect(center=(x_info, y_info))
+                    screen.blit(text, text_rect)
+                    # Control loop to mouve to another station
+                    if button2.text == gate_list[1]:
+                        # Display good choice information
+                        text = font.render("GOOD CHOICE", True, (10, 250, 10))
+                        text_rect = text.get_rect(center=(x_decision, y_info))
+                        screen.blit(text, text_rect)
+                        while x < a3:
+                            x += speed
+                            screen.fill((120, 120, 120))
+                            screen.blit(stations, ((screen_width - stations.get_width()) / 2, 5))
+                            screen.blit(globe, (X,Y+40))
+                            pygame.draw.rect(screen, (200, 100, 100), (x, b, rect_width, rect_height), 6)
+                            pygame.display.update()
+                    else:
+                        # Display the button choice decision
+                        text = font.render("Wrong choice", True, (250, 10, 10))
+                        text_rect = text.get_rect(center=(x_decision, y_info))
+                        screen.blit(text, text_rect)
+                if x == a3:
+                    # Display the station name message
+                    text = font.render("Refueling station 1", True, (220, 220, 220))
+                    text_rect = text.get_rect(center=(x_info, y_info))
+                    screen.blit(text, text_rect)
+                    # Control loop to mouve to another station
+                    if button2.text == gate_list[2]:
+                        # Display good choice information
+                        text = font.render("GOOD CHOICE", True, (10, 250, 10))
+                        text_rect = text.get_rect(center=(x_decision, y_info))
+                        screen.blit(text, text_rect)
+                        while x < a4:
+                            x += speed
+                            screen.fill((120, 120, 120))
+                            screen.blit(stations, ((screen_width - stations.get_width()) / 2, 5))
+                            screen.blit(globe, (X,Y+40))
+                            pygame.draw.rect(screen, (200, 100, 100), (x, b, rect_width, rect_height), 6)
+                            pygame.display.update()
+                    else:
+                        # Display the button choice decision
+                        text = font.render("Wrong choice", True, (250, 10, 10))
+                        text_rect = text.get_rect(center=(x_decision, y_info))
+                        screen.blit(text, text_rect)
+                if x == a4:
+                    # Display the station name message
+                    text = font.render("Refueling station 2", True, (220, 220, 220))
+                    text_rect = text.get_rect(center=(x_info, y_info))
+                    screen.blit(text, text_rect)
+                    # Control loop to mouve to another station
+                    if button2.text == gate_list[3]:
+                        # Display good choice information
+                        text = font.render("GOOD CHOICE", True, (10, 250, 10))
+                        text_rect = text.get_rect(center=(x_decision, y_info))
+                        screen.blit(text, text_rect)
+                        while x < a5:
+                            x += speed
+                            screen.fill((120, 120, 120))
+                            screen.blit(stations, ((screen_width - stations.get_width()) / 2, 5))
+                            screen.blit(globe, (X,Y+40))
+                            pygame.draw.rect(screen, (200, 100, 100), (x, b, rect_width, rect_height), 6)
+                            pygame.display.update()
+                    else:
+                        # Display the button choice decision
+                        text = font.render("Wrong choice", True, (250, 10, 10))
+                        text_rect = text.get_rect(center=(x_decision, y_info))
+                        screen.blit(text, text_rect)
+
+                print("Button 2 is clicked")
+            else:
+                pass
+            if button3.is_clicked(event):
+                if x == a1:
+                    # Display the station name message
+                    text = font.render("Polar station", True, (220, 220, 220))
+                    text_rect = text.get_rect(center=(x_info, y_info))
+                    screen.blit(text, text_rect)
+                    # Control loop to mouve to another station
+                    if button3.text == gate_list[0]:
+                        # Display good choice information
+                        text = font.render("GOOD CHOICE", True, (10, 250, 10))
+                        text_rect = text.get_rect(center=(x_decision, y_info))
+                        screen.blit(text, text_rect)
+                        while x < a2:
+                            x += speed
+                            screen.fill((120, 120, 120))
+                            screen.blit(stations, ((screen_width - stations.get_width()) / 2, 5))
+                            screen.blit(globe, (X,Y+40))
+                            pygame.draw.rect(screen, (200, 100, 100), (x, b, rect_width, rect_height), 6)
+                            pygame.display.update()
+                    else:
+                        # Display the button choice decision
+                        text = font.render("Wrong choice", True, (250, 10, 10))
+                        text_rect = text.get_rect(center=(x_decision, y_info))
+                        screen.blit(text, text_rect)
+                if x == a2:
+                    # Display the station name message
+                    text = font.render("Warehouse and store", True, (220, 220, 220))
+                    text_rect = text.get_rect(center=(x_info, y_info))
+                    screen.blit(text, text_rect)
+                    # Control loop to mouve to another station
+                    if button3.text == gate_list[1]:
+                        # Display good choice information
+                        text = font.render("GOOD CHOICE", True, (10, 250, 10))
+                        text_rect = text.get_rect(center=(x_decision, y_info))
+                        screen.blit(text, text_rect)
+                        while x < a3:
+                            x += speed
+                            screen.fill((120, 120, 120))
+                            screen.blit(stations, ((screen_width - stations.get_width()) / 2, 5))
+                            screen.blit(globe, (X,Y+40))
+                            pygame.draw.rect(screen, (200, 100, 100), (x, b, rect_width, rect_height), 6)
+                            pygame.display.update()
+                    else:
+                        # Display the button choice decision
+                        text = font.render("Wrong choice", True, (250, 10, 10))
+                        text_rect = text.get_rect(center=(x_decision, y_info))
+                        screen.blit(text, text_rect)
+                if x == a3:
+                    # Display the station name message
+                    text = font.render("Refueling station 1", True, (220, 220, 220))
+                    text_rect = text.get_rect(center=(x_info, y_info))
+                    screen.blit(text, text_rect)
+                    # Control loop to mouve to another station
+                    if button3.text == gate_list[2]:
+                        # Display good choice information
+                        text = font.render("GOOD CHOICE", True, (10, 250, 10))
+                        text_rect = text.get_rect(center=(x_decision, y_info))
+                        screen.blit(text, text_rect)
+                        while x < a4:
+                            x += speed
+                            screen.fill((120, 120, 120))
+                            screen.blit(stations, ((screen_width - stations.get_width()) / 2, 5))
+                            screen.blit(globe, (X,Y+40))
+                            pygame.draw.rect(screen, (200, 100, 100), (x, b, rect_width, rect_height), 6)
+                            pygame.display.update()
+                    else:
+                        # Display the button choice decision
+                        text = font.render("Wrong choice", True, (250, 10, 10))
+                        text_rect = text.get_rect(center=(x_decision, y_info))
+                        screen.blit(text, text_rect)
+                if x == a4:
+                    # Display the station name message
+                    text = font.render("Refueling station 2", True, (220, 220, 220))
+                    text_rect = text.get_rect(center=(x_info, y_info))
+                    screen.blit(text, text_rect)
+                    # Control loop to mouve to another station
+                    if button3.text == gate_list[3]:
+                        # Display good choice information
+                        text = font.render("GOOD CHOICE", True, (10, 250, 10))
+                        text_rect = text.get_rect(center=(x_decision, y_info))
+                        screen.blit(text, text_rect)
+                        while x < a5:
+                            x += speed
+                            screen.fill((120, 120, 120))
+                            screen.blit(stations, ((screen_width - stations.get_width()) / 2, 5))
+                            screen.blit(globe, (X,Y+40))
+                            pygame.draw.rect(screen, (200, 100, 100), (x, b, rect_width, rect_height), 6)
+                            pygame.display.update()
+                    else:
+                        # Display the button choice decision
+                        text = font.render("Wrong choice", True, (250, 10, 10))
+                        text_rect = text.get_rect(center=(x_decision, y_info))
+                        screen.blit(text, text_rect)
+                print("Button 3 is clicked")
+            else:
+                pass
+            if button4.is_clicked(event):
+                if x == a1:
+                    # Display the station name message
+                    text = font.render("Polar station", True, (220, 220, 220))
+                    text_rect = text.get_rect(center=(x_info, y_info))
+                    screen.blit(text, text_rect)
+                    # Control loop to mouve to another station
+                    if button4.text == gate_list[0]:
+                        # Display good choice information
+                        text = font.render("GOOD CHOICE", True, (10, 250, 10))
+                        text_rect = text.get_rect(center=(x_decision, y_info))
+                        screen.blit(text, text_rect)
+                        while x < a2:
+                            x += speed
+                            screen.fill((120, 120, 120))
+                            screen.blit(stations, ((screen_width - stations.get_width()) / 2, 5))
+                            screen.blit(globe, (X,Y+40))
+                            pygame.draw.rect(screen, (200, 100, 100), (x, b, rect_width, rect_height), 6)
+                            pygame.display.update()
+                    else:
+                        # Display the button choice decision
+                        text = font.render("Wrong choice", True, (250, 10, 10))
+                        text_rect = text.get_rect(center=(x_decision, y_info))
+                        screen.blit(text, text_rect)
+                if x == a2:
+                    # Display the station name message
+                    text = font.render("Warehouse and store", True, (220, 220, 220))
+                    text_rect = text.get_rect(center=(x_info, y_info))
+                    screen.blit(text, text_rect)
+                    # Control loop to mouve to another station
+                    if button4.text == gate_list[1]:
+                        # Display good choice information
+                        text = font.render("GOOD CHOICE", True, (10, 250, 10))
+                        text_rect = text.get_rect(center=(x_decision, y_info))
+                        screen.blit(text, text_rect)
+                        while x < a3:
+                            x += speed
+                            screen.fill((120, 120, 120))
+                            screen.blit(stations, ((screen_width - stations.get_width()) / 2, 5))
+                            screen.blit(globe, (X,Y+40))
+                            pygame.draw.rect(screen, (200, 100, 100), (x, b, rect_width, rect_height), 6)
+                            pygame.display.update()
+                    else:
+                        # Display the button choice decision
+                        text = font.render("Wrong choice", True, (250, 10, 10))
+                        text_rect = text.get_rect(center=(x_decision, y_info))
+                        screen.blit(text, text_rect)
+                if x == a3:
+                    # Display the station name message
+                    text = font.render("Refueling station 1", True, (220, 220, 220))
+                    text_rect = text.get_rect(center=(x_info, y_info))
+                    screen.blit(text, text_rect)
+                    # Control loop to mouve to another station
+                    if button4.text == gate_list[2]:
+                        # Display good choice information
+                        text = font.render("GOOD CHOICE", True, (10, 250, 10))
+                        text_rect = text.get_rect(center=(x_decision, y_info))
+                        screen.blit(text, text_rect)
+                        while x < a4:
+                            x += speed
+                            screen.fill((120, 120, 120))
+                            screen.blit(stations, ((screen_width - stations.get_width()) / 2, 5))
+                            screen.blit(globe, (X,Y+40))
+                            pygame.draw.rect(screen, (200, 100, 100), (x, b, rect_width, rect_height), 6)
+                            pygame.display.update()
+                    else:
+                        # Display the button choice decision
+                        text = font.render("Wrong choice", True, (250, 10, 10))
+                        text_rect = text.get_rect(center=(x_decision, y_info))
+                        screen.blit(text, text_rect)
+                if x == a4:
+                    # Display the station name message
+                    text = font.render("Refueling station 2", True, (220, 220, 220))
+                    text_rect = text.get_rect(center=(x_info, y_info))
+                    screen.blit(text, text_rect)
+                    # Control loop to mouve to another station
+                    if button4.text == gate_list[3]:
+                        # Display good choice information
+                        text = font.render("GOOD CHOICE", True, (10, 250, 10))
+                        text_rect = text.get_rect(center=(x_decision, y_info))
+                        screen.blit(text, text_rect)
+                        while x < a5:
+                            x += speed
+                            screen.fill((120, 120, 120))
+                            screen.blit(stations, ((screen_width - stations.get_width()) / 2, 5))
+                            screen.blit(globe, (X,Y+40))
+                            pygame.draw.rect(screen, (200, 100, 100), (x, b, rect_width, rect_height), 6)
+                            pygame.display.update()
+                    else:
+                        # Display the button choice decision
+                        text = font.render("Wrong choice", True, (250, 10, 10))
+                        text_rect = text.get_rect(center=(x_decision, y_info))
+                        screen.blit(text, text_rect)
+                print("Button 4 is clicked")
+            if x == a5:
+                # Display the station name message
+                text = font.render("Expedition base", True, (220, 220, 220))
+                text_rect = text.get_rect(center=(x_info, y_info))
+                # Display good choice information
+                text = font.render("SUCCEFULL GAME", True, (10, 250, 10))
+                text_rect = text.get_rect(center=(x_decision, y_info))
+                screen.blit(text, text_rect)
+            if x == a4:
+                # Display the station name message
+                text = font.render("Refueling station 2", True, (220, 220, 220))
+                text_rect = text.get_rect(center=(x_info, y_info))
+                screen.blit(text, text_rect)
+            if x == a3:
+                # Display the station name message
+                text = font.render("Refueling station 1", True, (220, 220, 220))
+                text_rect = text.get_rect(center=(x_info, y_info))
+                screen.blit(text, text_rect)
+            if x == a2:
+                # Display the station name message
+                text = font.render("Warehouse and store", True, (220, 220, 220))
+                text_rect = text.get_rect(center=(x_info, y_info))
+                screen.blit(text, text_rect)
+
+            else:
+                pass
+
+
+    #pygame.draw.rect(screen, (200, 100, 100), (x, b, rect_width, rect_height), 6)
+
+
+    button1.draw(screen)
+    button2.draw(screen)
+    button3.draw(screen)
+    button4.draw(screen)
+    clock.tick(60)
+    # Update the screen
+    # Update the screen
+
+    pygame.display.update()
+    pygame.display.flip()
+
+
+# Quit Pygame
+#pygame.quit()
