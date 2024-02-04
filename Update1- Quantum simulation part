@@ -1,0 +1,319 @@
+from qiskit.visualization import plot_bloch_multivector, plot_bloch_vector
+from qiskit import QuantumCircuit, QuantumRegister, ClassicalRegister, Aer, execute
+import numpy as np
+import random
+import cmath
+
+# Create quantum registers
+qreg = QuantumRegister(5, 'q')
+creg = ClassicalRegister(5, 'c')
+
+circuit = QuantumCircuit(qreg, creg)
+
+# PUT EACH STATION ON A SPARATLY QUANTUM CIRCUIT
+# Polar station
+q1 = QuantumRegister(1, 'Polar Station')
+PS = QuantumCircuit(q1)
+# "Warehouse and store"
+q2 = QuantumRegister(1, 'Warehouse and store')
+WS = QuantumCircuit(q2)
+# "refueling station 1"
+q3 = QuantumRegister(1, 'Refueling station 1')
+RS1 = QuantumCircuit(q3)
+# refueling station 2
+q4 = QuantumRegister(1, 'Refueling station 3')
+RS2 = QuantumCircuit(q4)
+# expedition base
+q5 = QuantumRegister(1, 'Expedition base')
+EB = QuantumCircuit(q5)
+
+stations = [PS, WS, RS1, RS2, EB]
+
+theta_rx = random.uniform(0, 2 * np.pi)
+theta_ry = random.uniform(0, 2 * np.pi)
+lamba_rz = random.uniform(0, 2 * np.pi)
+theta_r = random.uniform(0, 2 * np.pi)
+phi_r = random.uniform(0, 2 * np.pi)
+
+theta_u = random.uniform(0, 2 * np.pi)
+phi_u = random.uniform(0, 2 * np.pi)
+lamda_u = random.uniform(0, 2 * np.pi)
+
+rotations = ['rx', 'ry', 'rz', 'u', 'R', 'T']  # List of virtual rotational gates
+random.shuffle(rotations)  # Randomly the position of the virtuas rotational gate in the list
+
+gate_list = []
+
+"Polar station to warehouse and store"
+if rotations[0] == 'rx':
+    for station in stations[1:]:
+        station.rx(theta_rx, 0)
+    for i in range(1, 5):
+        circuit.rx(theta_rx, qreg[i])
+    angle = str(round(theta_rx * 180 / np.pi, 2))
+    gate = "RX(" + angle + ")"
+    gate_list.append(gate)
+
+elif rotations[0] == 'ry':
+    for station in stations[1:]:
+        station.ry(theta_ry, 0)
+    for i in range(1, 5):
+        circuit.ry(theta_ry, qreg[i])
+    angle = str(round(theta_ry * 180 / np.pi, 2))
+    gate = "RY(" + angle + ")"
+    gate_list.append(gate)
+
+elif rotations[0] == 'rz':
+    for station in stations[1:]:
+        station.rz(lamba_rz, 0)
+    for i in range(1, 5):
+        circuit.rz(lamba_rz, qreg[i])
+    angle = str(round(lamba_rz * 180 / np.pi, 2))
+    gate = "RZ(" + angle + ")"
+    gate_list.append(gate)
+
+elif rotations[0] == 'u':
+    for station in stations[1:]:
+        station.u(theta_u, phi_u, lamda_u, 0)
+    for i in range(1, 5):
+        circuit.u(theta_u, phi_u, lamda_u, qreg[i])
+    angle = str(round(theta_u * 180 / np.pi)) + ';' + str(round(phi_u * 180 / np.pi)) + ';' + str(
+        round(lamda_u * 180 / np.pi))
+    gate = "U(" + angle + ")"
+    gate_list.append(gate)
+
+elif rotations[0] == 'R':
+    for station in stations[1:]:
+        station.r(theta_r, phi_r, 0)
+    for i in range(1, 5):
+        circuit.r(theta_r, phi_r, qreg[i])
+    angle = str(round(theta_r * 180 / np.pi)) + ';' + str(round(phi_r * 180 / np.pi))
+    gate = "R(" + angle + ")"
+    gate_list.append(gate)
+else:
+
+    for station in stations[1:]:
+        station.t(0)
+    for i in range(1, 5):
+        circuit.t(qreg[i])
+    gate = "T"
+    gate_list.append(gate)
+
+"warehouse and store to refueling station 1"
+if rotations[1] == 'rx':
+    for station in stations[2:]:
+        station.rx(theta_rx, 0)
+    for i in range(2, 5):
+        circuit.rx(theta_rx, qreg[i])
+    angle = str(round(theta_rx * 180 / np.pi, 2))
+    gate = "RX(" + angle + ")"
+    gate_list.append(gate)
+
+elif rotations[1] == 'ry':
+    for station in stations[2:]:
+        station.ry(theta_ry, 0)
+    for i in range(2, 5):
+        circuit.ry(theta_ry, qreg[i])
+    angle = str(round(theta_ry * 180 / np.pi, 2))
+    gate = "RY(" + angle + ")"
+    gate_list.append(gate)
+
+elif rotations[1] == 'rz':
+    for station in stations[2:]:
+        station.rz(lamba_rz, 0)
+    for i in range(2, 5):
+        circuit.rz(lamba_rz, qreg[i])
+    angle = str(round(lamba_rz * 180 / np.pi, 2))
+    gate = "RZ(" + angle + ")"
+    gate_list.append(gate)
+
+elif rotations[1] == 'u':
+    for station in stations[2:]:
+        station.u(theta_u, phi_u, lamda_u, 0)
+    for i in range(2, 5):
+        circuit.u(theta_u, phi_u, lamda_u, qreg[i])
+    angle = str(round(theta_u * 180 / np.pi)) + ';' + str(round(phi_u * 180 / np.pi)) + ';' + str(
+        round(lamda_u * 180 / np.pi))
+    gate = "U(" + angle + ")"
+    gate_list.append(gate)
+
+elif rotations[1] == 'R':
+    for station in stations[2:]:
+        station.r(theta_r, phi_r, 0)
+    for i in range(2, 5):
+        circuit.r(theta_r, phi_r, qreg[i])
+    angle = str(round(theta_r * 180 / np.pi)) + ';' + str(round(phi_r * 180 / np.pi))
+    gate = "R(" + angle + ")"
+    gate_list.append(gate)
+
+else:
+    for station in stations[2:]:
+        station.t(0)
+    for i in range(2, 5):
+        circuit.t(qreg[i])
+    gate = "T"
+    gate_list.append(gate)
+
+"refueling station 1 to refueling station 2"
+if rotations[2] == 'rx':
+    for station in stations[3:]:
+        station.rx(theta_rx, 0)
+    for i in range(3, 5):
+        circuit.rx(theta_rx, qreg[i])
+    angle = str(round(theta_rx * 180 / np.pi, 2))
+    gate = "RX(" + angle + ")"
+    gate_list.append(gate)
+
+elif rotations[2] == 'ry':
+    for station in stations[3:]:
+        station.ry(theta_ry, 0)
+    for i in range(3, 5):
+        circuit.ry(theta_ry, qreg[i])
+    angle = str(round(theta_ry * 180 / np.pi, 2))
+    gate = "RY(" + angle + ")"
+    gate_list.append(gate)
+
+elif rotations[2] == 'rz':
+    for station in stations[3:]:
+        station.rz(lamba_rz, 0)
+    for i in range(3, 5):
+        circuit.rz(lamba_rz, qreg[i])
+    angle = str(round(lamba_rz * 180 / np.pi, 2))
+    gate = "RZ(" + angle + ")"
+    gate_list.append(gate)
+
+elif rotations[2] == 'u':
+    for station in stations[3:]:
+        station.u(theta_u, phi_u, lamda_u, 0)
+    for i in range(3, 5):
+        circuit.u(theta_u, phi_u, lamda_u, qreg[i])
+    angle = str(round(theta_u * 180 / np.pi)) + ';' + str(round(phi_u * 180 / np.pi)) + ';' + str(
+        round(lamda_u * 180 / np.pi))
+    gate = "U(" + angle + ")"
+    gate_list.append(gate)
+
+elif rotations[2] == 'R':
+    for station in stations[3:]:
+        station.r(theta_r, phi_r, 0)
+    for i in range(3, 5):
+        circuit.r(theta_r, phi_r, qreg[i])
+    angle = str(round(theta_r * 180 / np.pi)) + ';' + str(round(phi_r * 180 / np.pi))
+    gate = "R(" + angle + ")"
+    gate_list.append(gate)
+
+else:
+    for station in stations[3:]:
+        station.t(0)
+    for i in range(3, 5):
+        circuit.t(qreg[i])
+    gate = "T"
+    gate_list.append(gate)
+
+"refueling station 2 to expedition base"
+if rotations[3] == 'rx':
+    stations[4].rx(theta_rx, 0)
+    circuit.rx(theta_rx, qreg[4])
+    angle = str(round(theta_rx * 180 / np.pi, 2))
+    gate = "RX(" + angle + ")"
+    gate_list.append(gate)
+
+elif rotations[3] == 'ry':
+    stations[4].ry(theta_ry, 0)
+    circuit.ry(theta_ry, qreg[4])
+    angle = str(round(theta_ry * 180 / np.pi, 2))
+    gate = "RY(" + angle + ")"
+    gate_list.append(gate)
+elif rotations[3] == 'rz':
+    stations[4].rz(lamba_rz, 0)
+    circuit.rz(lamba_rz, qreg[4])
+    angle = str(round(lamba_rz * 180 / np.pi, 2))
+    gate = "RZ(" + angle + ")"
+    gate_list.append(gate)
+
+elif rotations[3] == 'u':
+    stations[4].u(theta_u, phi_u, lamda_u, 0)
+    circuit.u(theta_u, phi_u, lamda_u, qreg[4])
+    angle = str(round(theta_u * 180 / np.pi)) + ';' + str(round(phi_u * 180 / np.pi)) + ';' + str(
+        round(lamda_u * 180 / np.pi))
+    gate = "U(" + angle + ")"
+    gate_list.append(gate)
+
+elif rotations[3] == 'R':
+    stations[4].r(theta_r, phi_r, 0)
+    circuit.r(theta_r, phi_r, qreg[4])
+    angle = str(round(theta_r * 180 / np.pi)) + ';' + str(round(phi_r * 180 / np.pi))
+    gate = "R(" + angle + ")"
+    gate_list.append(gate)
+
+else:
+    stations[4].t(0)
+    circuit.t(qreg[4])
+    gate = "T"
+    gate_list.append(gate)
+
+plot_bloch_multivector(circuit).savefig("stations_list.png", dpi=40)
+circuit.measure(qreg, creg)
+print(circuit)
+
+print(gate_list)
+random.shuffle(gate_list)
+print(gate_list)
+
+
+# Simaulate and get the statevector result for each station
+def vector_state(circuit):
+    backend = Aer.get_backend('statevector_simulator')
+    job = execute(circuit, backend)
+    result = job.result()
+    statevector = result.get_statevector()
+
+    return statevector
+
+
+# get the caartesians coordinates for each stations
+def caartesians_coordinates(statevector):
+    x = 2 * (statevector[0] * np.conjugate(statevector[1])).real
+    y = 2 * (-statevector[0] * np.conjugate(statevector[1])).imag
+    z = np.linalg.norm(statevector[0]) ** 2 - np.linalg.norm(statevector[1]) ** 2
+
+    return [x, y, z]
+
+
+# get the globe who is represent by the bloch sphere with multi-statevectors
+
+# statevector on the Bloch sphere for each station
+ps = vector_state(PS)
+ws = vector_state(WS)
+rs1 = vector_state(RS1)
+rs2 = vector_state(RS2)
+eb = vector_state(EB)
+
+# VISUALIZATION
+bloch_states = {
+    "PS": caartesians_coordinates(ps),
+    "WS": caartesians_coordinates(ws),
+    "RS1": caartesians_coordinates(rs1),
+    "RS2": caartesians_coordinates(rs2),
+    "EB": caartesians_coordinates(eb)
+}
+
+import matplotlib.pyplot as plt
+from qiskit.visualization.bloch import Bloch
+
+
+def plot_bloch_multiple_vector(bloch_data, title='Globe', font_size=16):
+    fig, ax = plt.subplots(subplot_kw=dict(projection="3d"))
+
+    B = Bloch(axes=ax, font_size=font_size)
+    B.zlabel = ['z', '']
+
+    for key, value in bloch_data.items():
+        B.add_vectors([value])
+        B.add_annotation(value, key)
+
+    B.render(title=title)
+
+    return fig.savefig('Globe.png')
+
+
+plot_bloch_multiple_vector(bloch_states)
